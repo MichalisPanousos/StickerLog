@@ -24,7 +24,7 @@ struct StickerCardView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            Text(totalValue, format: .currency(code: "EUR"))
+            Text(totalValue, format: .eur)
                 .font(.caption)
                 .foregroundStyle(.primary)
         }

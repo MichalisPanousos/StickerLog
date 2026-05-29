@@ -53,7 +53,7 @@ private struct EventRowView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(totalValue, format: .currency(code: "EUR"))
+                Text(totalValue, format: .eur)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

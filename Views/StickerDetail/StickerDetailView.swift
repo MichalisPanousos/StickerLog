@@ -3,7 +3,10 @@ import SwiftData
 
 struct StickerDetailView: View {
     @Bindable var sticker: Sticker
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @State private var unitPriceText = ""
+    @State private var showingDeleteConfirm = false
     @State private var showingAddUnits = false
     @State private var showingRemoveUnits = false
 
@@ -46,7 +49,7 @@ struct StickerDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button(role: .destructive) {
-                    // delete sticker — wired in step 9
+                    showingDeleteConfirm = true
                 } label: {
                     Image(systemName: "trash")
                 }
@@ -55,6 +58,16 @@ struct StickerDetailView: View {
         }
         .onAppear {
             unitPriceText = sticker.unitPrice.description
+        }
+        .confirmationDialog(
+            "Delete this sticker? This removes it and its history permanently.",
+            isPresented: $showingDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Sticker", role: .destructive) {
+                modelContext.delete(sticker)
+                dismiss()
+            }
         }
         .sheet(isPresented: $showingAddUnits) {
             AddUnitsView(sticker: sticker)
@@ -108,7 +121,7 @@ struct StickerDetailView: View {
         HStack(spacing: 0) {
             statCell(label: "Units", value: "\(sticker.currentUnits)")
             Divider().frame(height: 36)
-            statCell(label: "Total Value", value: totalValue.formatted(.currency(code: "EUR")))
+            statCell(label: "Total Value", value: totalValue.formatted(.eur))
         }
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity)

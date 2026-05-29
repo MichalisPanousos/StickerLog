@@ -18,21 +18,31 @@ struct InventoryView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                header
-                    .padding(.horizontal)
-                    .padding(.top, 8)
+            Group {
+                if stickers.isEmpty {
+                    ContentUnavailableView(
+                        "No Stickers Yet",
+                        systemImage: "square.grid.2x2",
+                        description: Text("Tap + to add your first sticker.")
+                    )
+                } else {
+                    ScrollView {
+                        header
+                            .padding(.horizontal)
+                            .padding(.top, 8)
 
-                LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(stickers) { sticker in
-                        NavigationLink(value: sticker) {
-                            StickerCardView(sticker: sticker)
+                        LazyVGrid(columns: columns, spacing: 12) {
+                            ForEach(stickers) { sticker in
+                                NavigationLink(value: sticker) {
+                                    StickerCardView(sticker: sticker)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
-                        .buttonStyle(.plain)
+                        .padding(.horizontal)
+                        .padding(.top, 12)
                     }
                 }
-                .padding(.horizontal)
-                .padding(.top, 12)
             }
             .navigationTitle("Inventory")
             .navigationDestination(for: Sticker.self) { sticker in
@@ -59,7 +69,7 @@ struct InventoryView: View {
             Divider().frame(height: 36)
             statCell(
                 label: "Total Value",
-                value: totalValue.formatted(.currency(code: "EUR"))
+                value: totalValue.formatted(.eur)
             )
         }
         .padding(.vertical, 12)

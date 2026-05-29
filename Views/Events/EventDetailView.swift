@@ -60,7 +60,7 @@ struct EventDetailView: View {
         HStack(spacing: 0) {
             statCell(label: "Units Sold", value: "\(totalUnitsSold)")
             Divider().frame(height: 36)
-            statCell(label: "Total Value", value: totalValue.formatted(.currency(code: "EUR")))
+            statCell(label: "Total Value", value: totalValue.formatted(.eur))
         }
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity)
@@ -100,7 +100,7 @@ private struct StickerSaleRowView: View {
 
             Spacer()
 
-            Text(summary.value, format: .currency(code: "EUR"))
+            Text(summary.value, format: .eur)
                 .font(.subheadline)
                 .fontWeight(.medium)
         }
