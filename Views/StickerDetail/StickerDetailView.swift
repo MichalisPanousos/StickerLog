@@ -4,6 +4,7 @@ import SwiftData
 struct StickerDetailView: View {
     @Bindable var sticker: Sticker
     @State private var unitPriceText = ""
+    @State private var showingAddUnits = false
 
     private var totalValue: Decimal {
         Decimal(sticker.currentUnits) * sticker.unitPrice
@@ -53,6 +54,9 @@ struct StickerDetailView: View {
         }
         .onAppear {
             unitPriceText = sticker.unitPrice.description
+        }
+        .sheet(isPresented: $showingAddUnits) {
+            AddUnitsView(sticker: sticker)
         }
     }
 
@@ -122,7 +126,7 @@ struct StickerDetailView: View {
     private var actionButtons: some View {
         HStack(spacing: 12) {
             Button {
-                // add units — wired in step 6
+                showingAddUnits = true
             } label: {
                 Label("Add Units", systemImage: "plus.circle")
                     .frame(maxWidth: .infinity)
