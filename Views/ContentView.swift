@@ -7,7 +7,7 @@ struct ContentView: View {
                 InventoryView()
             }
             Tab("Events", systemImage: "bag") {
-                Text("Events")
+                EventsListView()
             }
         }
     }
