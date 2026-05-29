@@ -4,6 +4,8 @@ import SwiftData
 struct InventoryView: View {
     @Query(sort: \Sticker.dateCreated) private var stickers: [Sticker]
 
+    @State private var showingAddSticker = false
+
     private let columns = [GridItem(.flexible()), GridItem(.flexible())]
 
     private var totalUnits: Int {
@@ -33,11 +35,14 @@ struct InventoryView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        // add sticker — wired in step 4
+                        showingAddSticker = true
                     } label: {
                         Image(systemName: "plus")
                     }
                 }
+            }
+            .sheet(isPresented: $showingAddSticker) {
+                AddStickerView()
             }
         }
     }
