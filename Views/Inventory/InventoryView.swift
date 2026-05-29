@@ -25,13 +25,19 @@ struct InventoryView: View {
 
                 LazyVGrid(columns: columns, spacing: 12) {
                     ForEach(stickers) { sticker in
-                        StickerCardView(sticker: sticker)
+                        NavigationLink(value: sticker) {
+                            StickerCardView(sticker: sticker)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal)
                 .padding(.top, 12)
             }
             .navigationTitle("Inventory")
+            .navigationDestination(for: Sticker.self) { sticker in
+                StickerDetailView(sticker: sticker)
+            }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
