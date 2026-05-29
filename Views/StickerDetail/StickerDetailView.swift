@@ -5,6 +5,7 @@ struct StickerDetailView: View {
     @Bindable var sticker: Sticker
     @State private var unitPriceText = ""
     @State private var showingAddUnits = false
+    @State private var showingRemoveUnits = false
 
     private var totalValue: Decimal {
         Decimal(sticker.currentUnits) * sticker.unitPrice
@@ -57,6 +58,9 @@ struct StickerDetailView: View {
         }
         .sheet(isPresented: $showingAddUnits) {
             AddUnitsView(sticker: sticker)
+        }
+        .sheet(isPresented: $showingRemoveUnits) {
+            RemoveUnitsView(sticker: sticker)
         }
     }
 
@@ -134,7 +138,7 @@ struct StickerDetailView: View {
             .buttonStyle(.borderedProminent)
 
             Button {
-                // remove units — wired in step 7
+                showingRemoveUnits = true
             } label: {
                 Label("Remove Units", systemImage: "minus.circle")
                     .frame(maxWidth: .infinity)
