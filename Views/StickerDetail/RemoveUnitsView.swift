@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct RemoveUnitsView: View {
-    @Bindable var sticker: Sticker
+    let sticker: Sticker
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
@@ -12,6 +12,7 @@ struct RemoveUnitsView: View {
     @State private var selectedDestination: Destination = .correction
     @State private var selectedEvent: Event?
     @State private var newEventName = ""
+    @FocusState private var quantityFocused: Bool
 
     enum Destination: String, CaseIterable {
         case existingEvent = "Existing Event"
@@ -19,18 +20,26 @@ struct RemoveUnitsView: View {
         case correction    = "No event (correction)"
     }
 
-    private var quantity: Int? { Int(quantityText) }
+    private var quantity: Int? { Int(quantityInput: quantityText) }
 
     private var quantityExceedsStock: Bool {
         guard let q = quantity else { return false }
         return q > sticker.currentUnits
     }
 
+    private var trimmedNewEventName: String {
+        newEventName.trimmingCharacters(in: .whitespaces)
+    }
+
+    private var newEventNameIsTaken: Bool {
+        events.contains { $0.name.localizedCaseInsensitiveCompare(trimmedNewEventName) == .orderedSame }
+    }
+
     private var isValid: Bool {
         guard let q = quantity, q >= 1, !quantityExceedsStock else { return false }
         switch selectedDestination {
         case .existingEvent: return selectedEvent != nil
-        case .newEvent:      return !newEventName.trimmingCharacters(in: .whitespaces).isEmpty
+        case .newEvent:      return !trimmedNewEventName.isEmpty && !newEventNameIsTaken
         case .correction:    return true
         }
     }
@@ -55,6 +64,8 @@ struct RemoveUnitsView: View {
             }
             .onAppear {
                 selectedDestination = events.isEmpty ? .correction : .existingEvent
+                selectedEvent = events.first  // newest event
+                quantityFocused = true
             }
         }
     }
@@ -63,7 +74,12 @@ struct RemoveUnitsView: View {
         Section("Quantity to Remove") {
             TextField("e.g. 3", text: $quantityText)
                 .keyboardType(.numberPad)
-            if quantityExceedsStock {
+                .focused($quantityFocused)
+            if !quantityText.isEmpty && quantity == nil {
+                Text(invalidQuantityMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            } else if quantityExceedsStock {
                 Text("Not enough units (have \(sticker.currentUnits))")
                     .font(.caption)
                     .foregroundStyle(.red)
@@ -93,19 +109,23 @@ struct RemoveUnitsView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
-                    Picker("Select Event", selection: $selectedEvent) {
+                    Picker("Event", selection: $selectedEvent) {
                         Text("Select…").tag(Optional<Event>.none)
                         ForEach(events) { event in
                             Text(event.name).tag(Optional(event))
                         }
                     }
-                    .pickerStyle(.inline)
-                    .labelsHidden()
+                    .pickerStyle(.menu)
                 }
             }
         case .newEvent:
             Section("New Event Name") {
                 TextField("e.g. Summer Market", text: $newEventName)
+                if newEventNameIsTaken {
+                    Text("An event with this name already exists. Choose it under Existing Event.")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
             }
         case .correction:
             EmptyView()
@@ -120,7 +140,7 @@ struct RemoveUnitsView: View {
         case .existingEvent:
             sticker.record(-quantity, type: .sale, event: selectedEvent)
         case .newEvent:
-            let event = Event(name: newEventName.trimmingCharacters(in: .whitespaces))
+            let event = Event(name: trimmedNewEventName)
             modelContext.insert(event)
             sticker.record(-quantity, type: .sale, event: event)
         case .correction:

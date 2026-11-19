@@ -88,6 +88,17 @@ Select an **iPhone simulator** (iPhone 16 or similar) from the scheme menu and p
 
 ---
 
+## 9. Add the test target
+
+The invariant tests live in `Tests/RecordAndParsingTests.swift` (Swift Testing).
+
+1. **File → New → Target… → iOS → Unit Testing Bundle**. Name it `StickerLogTests`, set **Testing System** to **Swift Testing**, and **Target to be Tested** to `StickerLog`.
+2. Delete the test file Xcode generates for the new target (**Move to Trash**).
+3. Drag `Tests/RecordAndParsingTests.swift` into the `StickerLogTests` group. Leave **"Copy items if needed"** unchecked, and set target membership to **StickerLogTests only**.
+4. Press **⌘U** to run the tests.
+
+---
+
 ## Architecture invariants
 
 Keep these in mind when extending the app. They are not enforced by the compiler — violating them silently corrupts data.

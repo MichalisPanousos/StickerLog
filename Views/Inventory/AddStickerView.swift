@@ -8,6 +8,7 @@ struct AddStickerView: View {
 
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var photoData: Data?
+    @State private var isLoadingPhoto = false
     @State private var name = ""
     @State private var unitPriceText = ""
     @State private var initialQuantityText = "0"
@@ -15,7 +16,7 @@ struct AddStickerView: View {
     private var isValid: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty
             && Decimal(userInput: unitPriceText) != nil
-            && Int(initialQuantityText).map { $0 >= 0 } ?? false
+            && Int(quantityInput: initialQuantityText) != nil
     }
 
     var body: some View {
@@ -43,6 +44,11 @@ struct AddStickerView: View {
                             .multilineTextAlignment(.trailing)
                             .frame(width: 80)
                     }
+                    if !initialQuantityText.isEmpty && Int(quantityInput: initialQuantityText) == nil {
+                        Text(invalidQuantityMessage)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
                 }
             }
             .navigationTitle("New Sticker")
@@ -53,14 +59,18 @@ struct AddStickerView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save", action: save)
-                        .disabled(!isValid)
+                        .disabled(!isValid || isLoadingPhoto)
                 }
             }
-            .onChange(of: selectedPhoto) { _, newItem in
-                Task {
-                    let original = try? await newItem?.loadTransferable(type: Data.self)
-                    photoData = original.flatMap(Self.downscaledJPEG)
-                }
+            // .task(id:) cancels the previous load when a new photo is picked,
+            // so a slow earlier load can't overwrite a newer selection.
+            .task(id: selectedPhoto) {
+                guard let item = selectedPhoto else { return }
+                isLoadingPhoto = true
+                let original = try? await item.loadTransferable(type: Data.self)
+                guard !Task.isCancelled else { return }
+                photoData = original.flatMap(Self.downscaledJPEG)
+                isLoadingPhoto = false
             }
         }
     }
@@ -68,7 +78,11 @@ struct AddStickerView: View {
     @ViewBuilder
     private var photoPicker: some View {
         PhotosPicker(selection: $selectedPhoto, matching: .images) {
-            if photoData != nil {
+            if isLoadingPhoto {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 200)
+            } else if photoData != nil {
                 StickerPhotoView(data: photoData)
                     .frame(height: 200)
             } else {
@@ -110,8 +124,7 @@ struct AddStickerView: View {
 
     private func save() {
         guard let price = Decimal(userInput: unitPriceText),
-              let quantity = Int(initialQuantityText),
-              quantity >= 0
+              let quantity = Int(quantityInput: initialQuantityText)
         else { return }
 
         let sticker = Sticker(
@@ -120,7 +133,12 @@ struct AddStickerView: View {
             unitPrice: price
         )
         modelContext.insert(sticker)
-        sticker.record(quantity, type: .added)
+        // A sticker created with 0 units gets no "+0" history entry.
+        if quantity > 0 {
+            sticker.record(quantity, type: .added)
+        } else {
+            try? modelContext.save()
+        }
 
         dismiss()
     }

@@ -2,12 +2,13 @@ import SwiftUI
 import SwiftData
 
 struct AddUnitsView: View {
-    @Bindable var sticker: Sticker
+    let sticker: Sticker
     @Environment(\.dismiss) private var dismiss
 
     @State private var quantityText = ""
+    @FocusState private var quantityFocused: Bool
 
-    private var quantity: Int? { Int(quantityText) }
+    private var quantity: Int? { Int(quantityInput: quantityText) }
     private var isValid: Bool { (quantity ?? 0) >= 1 }
 
     var body: some View {
@@ -16,6 +17,12 @@ struct AddUnitsView: View {
                 Section("Quantity to Add") {
                     TextField("e.g. 10", text: $quantityText)
                         .keyboardType(.numberPad)
+                        .focused($quantityFocused)
+                    if !quantityText.isEmpty && quantity == nil {
+                        Text(invalidQuantityMessage)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
                 }
             }
             .navigationTitle("Add Units")
@@ -29,6 +36,7 @@ struct AddUnitsView: View {
                         .disabled(!isValid)
                 }
             }
+            .onAppear { quantityFocused = true }
         }
     }
 

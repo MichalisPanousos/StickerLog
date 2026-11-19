@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct StickerDetailView: View {
-    @Bindable var sticker: Sticker
+    let sticker: Sticker
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var unitPriceText = ""
@@ -76,6 +76,8 @@ struct StickerDetailView: View {
                 pendingDelete = true
                 dismiss()
             }
+        } message: {
+            Text("Its sales will also be removed from events.")
         }
         .sheet(isPresented: $showingAddUnits) {
             AddUnitsView(sticker: sticker)
@@ -143,6 +145,7 @@ struct StickerDetailView: View {
             }
             .buttonStyle(.bordered)
             .tint(.red)
+            .disabled(sticker.currentUnits == 0)
         }
     }
 
