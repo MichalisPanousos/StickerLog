@@ -58,7 +58,8 @@ struct AddStickerView: View {
             }
             .onChange(of: selectedPhoto) { _, newItem in
                 Task {
-                    photoData = try? await newItem?.loadTransferable(type: Data.self)
+                    let original = try? await newItem?.loadTransferable(type: Data.self)
+                    photoData = original.flatMap(Self.downscaledJPEG)
                 }
             }
         }
@@ -67,14 +68,9 @@ struct AddStickerView: View {
     @ViewBuilder
     private var photoPicker: some View {
         PhotosPicker(selection: $selectedPhoto, matching: .images) {
-            if let data = photoData, let uiImage = UIImage(data: data) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity)
+            if photoData != nil {
+                StickerPhotoView(data: photoData)
                     .frame(height: 200)
-                    .clipped()
-                    .contentShape(Rectangle())
             } else {
                 HStack {
                     Spacer()
@@ -91,6 +87,25 @@ struct AddStickerView: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    /// Shrinks a picked photo so its longest side is at most `maxDimension` px and re-encodes it as JPEG.
+    /// Transparent areas become white, since JPEG has no alpha.
+    private static func downscaledJPEG(_ data: Data) -> Data? {
+        let maxDimension: CGFloat = 1024
+        guard let image = UIImage(data: data) else { return nil }
+        let scale = min(1, maxDimension / max(image.size.width, image.size.height))
+        let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+        let resized = UIGraphicsImageRenderer(size: size, format: format).image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+            image.draw(in: CGRect(origin: .zero, size: size))
+        }
+        return resized.jpegData(compressionQuality: 0.8)
     }
 
     private func save() {

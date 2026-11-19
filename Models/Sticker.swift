@@ -5,7 +5,7 @@ import SwiftData
 final class Sticker {
     var id: UUID
     var name: String
-    var photoData: Data?
+    @Attribute(.externalStorage) var photoData: Data?
     var unitPrice: Decimal
     var currentUnits: Int
     var dateCreated: Date

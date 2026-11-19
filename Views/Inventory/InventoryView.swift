@@ -27,8 +27,11 @@ struct InventoryView: View {
                     )
                 } else {
                     ScrollView {
-                        header
-                            .padding(.horizontal)
+                        StatsHeader(
+                            leading: ("Total Units", "\(totalUnits)"),
+                            trailing: ("Total Value", totalValue.formatted(.eur))
+                        )
+                        .padding(.horizontal)
                             .padding(.top, 8)
 
                         LazyVGrid(columns: columns, spacing: 12) {
@@ -61,31 +64,5 @@ struct InventoryView: View {
                 AddStickerView()
             }
         }
-    }
-
-    private var header: some View {
-        HStack(spacing: 0) {
-            statCell(label: "Total Units", value: "\(totalUnits)")
-            Divider().frame(height: 36)
-            statCell(
-                label: "Total Value",
-                value: totalValue.formatted(.eur)
-            )
-        }
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-    }
-
-    private func statCell(label: String, value: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.title3)
-                .fontWeight(.semibold)
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
     }
 }

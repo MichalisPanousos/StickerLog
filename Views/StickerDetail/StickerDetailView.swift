@@ -19,11 +19,8 @@ struct StickerDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                photoView
-                    .frame(maxWidth: .infinity)
+                StickerPhotoView(data: sticker.photoData, cornerRadius: 14, placeholderFont: .system(size: 48))
                     .frame(height: 280)
-                    .clipped()
-                    .cornerRadius(14)
 
                 VStack(alignment: .leading, spacing: 16) {
                     Text(sticker.name)
@@ -88,23 +85,6 @@ struct StickerDetailView: View {
         }
     }
 
-    @ViewBuilder
-    private var photoView: some View {
-        if let data = sticker.photoData, let uiImage = UIImage(data: data) {
-            Image(uiImage: uiImage)
-                .resizable()
-                .scaledToFill()
-        } else {
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color(.systemGray5))
-                .overlay {
-                    Image(systemName: "photo")
-                        .font(.system(size: 48))
-                        .foregroundStyle(.tertiary)
-                }
-        }
-    }
-
     private var unitPriceRow: some View {
         HStack {
             Text("Unit Price")
@@ -138,26 +118,11 @@ struct StickerDetailView: View {
     }
 
     private var statsRow: some View {
-        HStack(spacing: 0) {
-            statCell(label: "Units", value: "\(sticker.currentUnits)")
-            Divider().frame(height: 36)
-            statCell(label: "Total Value", value: totalValue.formatted(.eur))
-        }
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity)
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
-    }
-
-    private func statCell(label: String, value: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.title3)
-                .fontWeight(.semibold)
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
+        StatsHeader(
+            leading: ("Units", "\(sticker.currentUnits)"),
+            trailing: ("Total Value", totalValue.formatted(.eur)),
+            cornerRadius: 10
+        )
     }
 
     private var actionButtons: some View {

@@ -10,16 +10,6 @@ private struct StickerSummary: Identifiable {
 struct EventDetailView: View {
     let event: Event
 
-    private var totalUnitsSold: Int {
-        event.logEntries.reduce(0) { $0 + abs($1.quantityChange) }
-    }
-
-    private var totalValue: Decimal {
-        event.logEntries.reduce(Decimal(0)) { sum, entry in
-            sum + Decimal(abs(entry.quantityChange)) * (entry.priceAtTime ?? 0)
-        }
-    }
-
     private var stickerSummaries: [StickerSummary] {
         var dict: [UUID: (Sticker, Int, Decimal)] = [:]
         for entry in event.logEntries {
@@ -40,8 +30,11 @@ struct EventDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                header
-                    .padding(.horizontal)
+                StatsHeader(
+                    leading: ("Units Sold", "\(event.totalUnitsSold)"),
+                    trailing: ("Total Value", event.totalValue.formatted(.eur))
+                )
+                .padding(.horizontal)
 
                 LazyVStack(spacing: 8) {
                     ForEach(stickerSummaries) { summary in
@@ -55,29 +48,6 @@ struct EventDetailView: View {
         .navigationTitle(event.name)
         .navigationBarTitleDisplayMode(.inline)
     }
-
-    private var header: some View {
-        HStack(spacing: 0) {
-            statCell(label: "Units Sold", value: "\(totalUnitsSold)")
-            Divider().frame(height: 36)
-            statCell(label: "Total Value", value: totalValue.formatted(.eur))
-        }
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity)
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
-    }
-
-    private func statCell(label: String, value: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.title3)
-                .fontWeight(.semibold)
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-    }
 }
 
 private struct StickerSaleRowView: View {
@@ -85,9 +55,8 @@ private struct StickerSaleRowView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            photoView
+            StickerPhotoView(data: summary.sticker.photoData, cornerRadius: 8)
                 .frame(width: 56, height: 56)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(summary.sticker.name)
@@ -106,21 +75,5 @@ private struct StickerSaleRowView: View {
         }
         .padding(12)
         .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
-    }
-
-    @ViewBuilder
-    private var photoView: some View {
-        if let data = summary.sticker.photoData, let uiImage = UIImage(data: data) {
-            Image(uiImage: uiImage)
-                .resizable()
-                .scaledToFill()
-        } else {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(.systemGray5))
-                .overlay {
-                    Image(systemName: "photo")
-                        .foregroundStyle(.tertiary)
-                }
-        }
     }
 }

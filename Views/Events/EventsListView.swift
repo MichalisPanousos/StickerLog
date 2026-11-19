@@ -34,26 +34,16 @@ struct EventsListView: View {
 private struct EventRowView: View {
     let event: Event
 
-    private var totalUnitsSold: Int {
-        event.logEntries.reduce(0) { $0 + abs($1.quantityChange) }
-    }
-
-    private var totalValue: Decimal {
-        event.logEntries.reduce(Decimal(0)) { sum, entry in
-            sum + Decimal(abs(entry.quantityChange)) * (entry.priceAtTime ?? 0)
-        }
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(event.name)
                 .font(.headline)
             HStack {
-                Text("\(totalUnitsSold) units sold")
+                Text("\(event.totalUnitsSold) units sold")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(totalValue, format: .eur)
+                Text(event.totalValue, format: .eur)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

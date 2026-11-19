@@ -9,11 +9,8 @@ struct StickerCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            photoView
-                .frame(maxWidth: .infinity)
+            StickerPhotoView(data: sticker.photoData, cornerRadius: 10, placeholderFont: .largeTitle)
                 .aspectRatio(1, contentMode: .fit)
-                .clipped()
-                .cornerRadius(10)
 
             Text(sticker.name)
                 .font(.subheadline)
@@ -29,23 +26,6 @@ struct StickerCardView: View {
                 .foregroundStyle(.primary)
         }
         .padding(10)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-    }
-
-    @ViewBuilder
-    private var photoView: some View {
-        if let data = sticker.photoData, let uiImage = UIImage(data: data) {
-            Image(uiImage: uiImage)
-                .resizable()
-                .scaledToFill()
-        } else {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(.systemGray5))
-                .overlay {
-                    Image(systemName: "photo")
-                        .font(.largeTitle)
-                        .foregroundStyle(.tertiary)
-                }
-        }
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
     }
 }
