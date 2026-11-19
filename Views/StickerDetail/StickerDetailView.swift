@@ -9,13 +9,11 @@ struct StickerDetailView: View {
     @State private var showingDeleteConfirm = false
     @State private var showingAddUnits = false
     @State private var showingRemoveUnits = false
+    @State private var pendingDelete = false
+    @FocusState private var priceFocused: Bool
 
     private var totalValue: Decimal {
         Decimal(sticker.currentUnits) * sticker.unitPrice
-    }
-
-    private var sortedEntries: [LogEntry] {
-        sticker.logEntries.sorted { $0.date > $1.date }
     }
 
     var body: some View {
@@ -55,9 +53,22 @@ struct StickerDetailView: View {
                 }
                 .tint(.red)
             }
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { priceFocused = false }
+            }
         }
         .onAppear {
-            unitPriceText = sticker.unitPrice.description
+            unitPriceText = sticker.unitPrice.inputString
+        }
+        .onDisappear {
+            // Delete only after the view has left the screen, so nothing renders a deleted model.
+            if pendingDelete {
+                modelContext.delete(sticker)
+                try? modelContext.save()
+            } else {
+                commitPrice()
+            }
         }
         .confirmationDialog(
             "Delete this sticker? This removes it and its history permanently.",
@@ -65,7 +76,7 @@ struct StickerDetailView: View {
             titleVisibility: .visible
         ) {
             Button("Delete Sticker", role: .destructive) {
-                modelContext.delete(sticker)
+                pendingDelete = true
                 dismiss()
             }
         }
@@ -106,15 +117,24 @@ struct StickerDetailView: View {
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.trailing)
                     .frame(width: 90)
-                    .onChange(of: unitPriceText) { _, newValue in
-                        if let price = Decimal(string: newValue, locale: .current) {
-                            sticker.unitPrice = price
-                        }
+                    .focused($priceFocused)
+                    .onChange(of: priceFocused) { _, focused in
+                        if !focused { commitPrice() }
                     }
             }
         }
         .padding()
         .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    /// Saves the typed price if it was edited and is valid; otherwise restores the current price.
+    private func commitPrice() {
+        if unitPriceText != sticker.unitPrice.inputString,
+           let price = Decimal(userInput: unitPriceText) {
+            sticker.unitPrice = price
+            try? modelContext.save()
+        }
+        unitPriceText = sticker.unitPrice.inputString
     }
 
     private var statsRow: some View {
@@ -162,7 +182,10 @@ struct StickerDetailView: View {
     }
 
     private var historySection: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        let sortedEntries = sticker.logEntries.sorted { $0.date > $1.date }
+        let lastID = sortedEntries.last?.id
+
+        return VStack(alignment: .leading, spacing: 0) {
             Text("History")
                 .font(.headline)
                 .padding(.bottom, 8)
@@ -176,7 +199,7 @@ struct StickerDetailView: View {
                 LazyVStack(spacing: 0) {
                     ForEach(sortedEntries) { entry in
                         HistoryRowView(entry: entry)
-                        if entry.id != sortedEntries.last?.id {
+                        if entry.id != lastID {
                             Divider()
                         }
                     }

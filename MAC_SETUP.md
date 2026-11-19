@@ -93,7 +93,7 @@ Select an **iPhone simulator** (iPhone 16 or similar) from the scheme menu and p
 Keep these in mind when extending the app. They are not enforced by the compiler — violating them silently corrupts data.
 
 **`currentUnits` is always the running sum of `LogEntry.quantityChange`**
-It is incremented/decremented only by `AddUnitsView` and `RemoveUnitsView`, never edited directly. Do not add a UI field that writes to `currentUnits` independently.
+It is changed only by `Sticker.record(_:type:event:)` (in `Models/Sticker.swift`), which also creates the matching `LogEntry`, never edited directly. Do not add a UI field that writes to `currentUnits` independently.
 
 **Sales snapshot the price at the moment of the transaction**
 `LogEntry.priceAtTime` is set to `sticker.unitPrice` when a sale is recorded. Event totals are computed from `priceAtTime`, not from the sticker's current `unitPrice`. This means editing a sticker's price does not retroactively change event revenue figures.

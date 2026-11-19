@@ -3,7 +3,6 @@ import SwiftData
 
 struct AddUnitsView: View {
     @Bindable var sticker: Sticker
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     @State private var quantityText = ""
@@ -36,18 +35,7 @@ struct AddUnitsView: View {
     private func save() {
         guard let quantity, quantity >= 1 else { return }
 
-        sticker.currentUnits += quantity
-
-        let entry = LogEntry(
-            quantityChange: quantity,
-            date: .now,
-            type: .added,
-            priceAtTime: nil,
-            sticker: sticker,
-            event: nil
-        )
-        modelContext.insert(entry)
-
+        sticker.record(quantity, type: .added)
         dismiss()
     }
 }

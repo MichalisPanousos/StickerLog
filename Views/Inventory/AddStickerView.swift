@@ -14,7 +14,7 @@ struct AddStickerView: View {
 
     private var isValid: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty
-            && Decimal(string: unitPriceText, locale: .current) != nil
+            && Decimal(userInput: unitPriceText) != nil
             && Int(initialQuantityText).map { $0 >= 0 } ?? false
     }
 
@@ -94,7 +94,7 @@ struct AddStickerView: View {
     }
 
     private func save() {
-        guard let price = Decimal(string: unitPriceText, locale: .current),
+        guard let price = Decimal(userInput: unitPriceText),
               let quantity = Int(initialQuantityText),
               quantity >= 0
         else { return }
@@ -102,20 +102,10 @@ struct AddStickerView: View {
         let sticker = Sticker(
             name: name.trimmingCharacters(in: .whitespaces),
             photoData: photoData,
-            unitPrice: price,
-            currentUnits: quantity
+            unitPrice: price
         )
         modelContext.insert(sticker)
-
-        let entry = LogEntry(
-            quantityChange: quantity,
-            date: .now,
-            type: .added,
-            priceAtTime: nil,
-            sticker: sticker,
-            event: nil
-        )
-        modelContext.insert(entry)
+        sticker.record(quantity, type: .added)
 
         dismiss()
     }

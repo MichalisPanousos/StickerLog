@@ -113,50 +113,20 @@ struct RemoveUnitsView: View {
     }
 
     private func save() {
-        guard let quantity, quantity >= 1, quantity <= sticker.currentUnits else { return }
-
-        sticker.currentUnits -= quantity
-
-        let entry: LogEntry
+        // All validation happens before anything is mutated.
+        guard isValid, let quantity else { return }
 
         switch selectedDestination {
         case .existingEvent:
-            guard let event = selectedEvent else { return }
-            entry = LogEntry(
-                quantityChange: -quantity,
-                date: .now,
-                type: .sale,
-                priceAtTime: sticker.unitPrice,
-                sticker: sticker,
-                event: event
-            )
-
+            sticker.record(-quantity, type: .sale, event: selectedEvent)
         case .newEvent:
-            let trimmedName = newEventName.trimmingCharacters(in: .whitespaces)
-            guard !trimmedName.isEmpty else { return }
-            let event = Event(name: trimmedName)
+            let event = Event(name: newEventName.trimmingCharacters(in: .whitespaces))
             modelContext.insert(event)
-            entry = LogEntry(
-                quantityChange: -quantity,
-                date: .now,
-                type: .sale,
-                priceAtTime: sticker.unitPrice,
-                sticker: sticker,
-                event: event
-            )
-
+            sticker.record(-quantity, type: .sale, event: event)
         case .correction:
-            entry = LogEntry(
-                quantityChange: -quantity,
-                date: .now,
-                type: .correction,
-                priceAtTime: nil,
-                sticker: sticker,
-                event: nil
-            )
+            sticker.record(-quantity, type: .correction)
         }
 
-        modelContext.insert(entry)
         dismiss()
     }
 }

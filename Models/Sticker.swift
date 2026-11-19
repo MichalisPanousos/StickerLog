@@ -29,3 +29,31 @@ final class Sticker {
         self.dateCreated = dateCreated
     }
 }
+
+extension Sticker {
+    /// The only place that changes `currentUnits`. Keeps it equal to the sum of
+    /// `logEntries.quantityChange`, snapshots `unitPrice` on sales, and never attaches
+    /// a correction to an event. The sticker must already be inserted into a context.
+    func record(_ change: Int, type: LogEntryType, event: Event? = nil) {
+        guard let context = modelContext else {
+            assertionFailure("record() called on a sticker that is not in a ModelContext")
+            return
+        }
+        guard currentUnits + change >= 0 else {
+            assertionFailure("record() would make currentUnits negative")
+            return
+        }
+
+        let entry = LogEntry(
+            quantityChange: change,
+            type: type,
+            priceAtTime: type == .sale ? unitPrice : nil
+        )
+        context.insert(entry)
+        logEntries.append(entry)
+        entry.event = type == .correction ? nil : event
+        currentUnits += change
+
+        try? context.save()
+    }
+}
